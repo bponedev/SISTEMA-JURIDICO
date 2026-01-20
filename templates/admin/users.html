@@ -1,1 +1,140 @@
-<!-- users -->
+{% extends "base.html" %}
+
+{% block title %}Usuários - Sistema Jurídico{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-people"></i> GERENCIAR USUÁRIOS</h2>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> NOVO USUÁRIO
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>USUÁRIO</th>
+                        <th>NOME</th>
+                        <th>PAPEL</th>
+                        <th>ESCRITÓRIOS</th>
+                        <th>STATUS</th>
+                        <th>AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td><strong>{{ user.username }}</strong></td>
+                        <td>{{ user.nome }}</td>
+                        <td>
+                            <span class="badge bg-{% if user.role == 'ADMIN' %}danger{% elif user.role == 'SUPERVISOR' %}warning{% elif user.role == 'OPERADOR' %}info{% else %}secondary{% endif %}">
+                                {{ user.role }}
+                            </span>
+                        </td>
+                        <td>
+                            {% set offices = user.get_offices_list() %}
+                            {% if offices %}
+                                {{ ', '.join(offices) }}
+                            {% else %}
+                                <span class="text-muted">Nenhum</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if user.ativo else 'danger' }}">
+                                {{ 'ATIVO' if user.ativo else 'INATIVO' }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
+                               class="btn btn-sm btn-warning" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-sm btn-info btn-reset-password" 
+                                    data-id="{{ user.id }}" data-username="{{ user.username }}" 
+                                    title="Redefinir Senha">
+                                <i class="bi bi-key"></i>
+                            </button>
+                            <button class="btn btn-sm btn-{{ 'secondary' if user.ativo else 'success' }} btn-toggle" 
+                                    data-id="{{ user.id }}" 
+                                    title="{{ 'Desativar' if user.ativo else 'Ativar' }}">
+                                <i class="bi bi-power"></i>
+                            </button>
+                            {% if user.username != 'admin' %}
+                            <button class="btn btn-sm btn-danger btn-delete" 
+                                    data-id="{{ user.id }}" data-username="{{ user.username }}" 
+                                    title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Redefinir senha
+$('.btn-reset-password').on('click', function() {
+    const id = $(this).data('id');
+    const username = $(this).data('username');
+    const newPassword = prompt(`Nova senha para ${username}:`);
+    
+    if (!newPassword) return;
+    
+    $.post('{{ url_for("admin.reset_password", user_id=0) }}'.replace('0', id), {
+        new_password: newPassword
+    })
+    .done(function(data) {
+        alert(data.message);
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+
+// Ativar/Desativar
+$('.btn-toggle').on('click', function() {
+    const id = $(this).data('id');
+    
+    $.post('{{ url_for("admin.toggle_user", user_id=0) }}'.replace('0', id))
+    .done(function(data) {
+        alert(data.message);
+        location.reload();
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+
+// Excluir
+$('.btn-delete').on('click', function() {
+    const id = $(this).data('id');
+    const username = $(this).data('username');
+    
+    if (!confirm(`Confirma a exclusão do usuário ${username}?`)) return;
+    
+    $.post('{{ url_for("admin.delete_user", user_id=0) }}'.replace('0', id))
+    .done(function(data) {
+        alert(data.message);
+        location.reload();
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+</script>
+{% endblock %}
