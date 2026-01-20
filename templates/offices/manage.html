@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Escritórios - Sistema Jurídico{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-building"></i> GERENCIAR ESCRITÓRIOS</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> CRIAR NOVO ESCRITÓRIO</h5>
+            </div>
+            <div class="card-body">
+                <form id="formCreateOffice">
+                    <div class="mb-3">
+                        <label class="form-label">NOME DO ESCRITÓRIO</label>
+                        <input type="text" name="name" class="form-control" 
+                               placeholder="Ex: São Paulo" required>
+                        <small class="text-muted">
+                            Será automaticamente convertido para código: "sao_paulo"
+                        </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> CRIAR ESCRITÓRIO
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> ESTATÍSTICAS</h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('offices.office_stats') }}" class="btn btn-info btn-lg w-100">
+                    <i class="bi bi-graph-up"></i> VER ESTATÍSTICAS DETALHADAS
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">ESCRITÓRIOS CADASTRADOS</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>CÓDIGO</th>
+                        <th>NOME</th>
+                        <th>CRIADO EM</th>
+                        <th>STATUS</th>
+                        <th>AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for office in offices %}
+                    <tr>
+                        <td>{{ office.id }}</td>
+                        <td><code>{{ office.code }}</code></td>
+                        <td>{{ office.name }}</td>
+                        <td>{{ office.created_at.strftime('%d/%m/%Y') if office.created_at else '-' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if office.ativo else 'danger' }}">
+                                {{ 'ATIVO' if office.ativo else 'INATIVO' }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-warning btn-edit-office" 
+                                    data-id="{{ office.id }}" data-name="{{ office.name }}" 
+                                    title="Editar Nome">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger btn-delete-office" 
+                                    data-id="{{ office.id }}" data-name="{{ office.name }}" 
+                                    title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Nenhum escritório cadastrado</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">ESCRITÓRIOS DINÂMICOS (TABELAS EXISTENTES)</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for office in dynamic_offices %}
+            <div class="col-md-3">
+                <div class="alert alert-secondary">
+                    <i class="bi bi-database"></i> <strong>{{ office }}</strong>
+                </div>
+            </div>
+            {% else %}
+            <div class="col">
+                <p class="text-muted">Nenhuma tabela dinâmica encontrada</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Criar escritório
+$('#formCreateOffice').on('submit', function(e) {
+    e.preventDefault();
+    
+    const name = $('input[name="name"]').val().trim();
+    
+    if (!name) {
+        alert('Nome do escritório é obrigatório');
+        return;
+    }
+    
+    $.post('{{ url_for("offices.create_office") }}', { name: name })
+    .done(function(data) {
+        alert(data.message);
+        location.reload();
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+
+// Editar nome
+$('.btn-edit-office').on('click', function() {
+    const id = $(this).data('id');
+    const currentName = $(this).data('name');
+    const newName = prompt('Novo nome para o escritório:', currentName);
+    
+    if (!newName || newName === currentName) return;
+    
+    $.post('{{ url_for("offices.edit_office", office_id=0) }}'.replace('0', id), {
+        name: newName
+    })
+    .done(function(data) {
+        alert(data.message);
+        location.reload();
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+
+// Excluir escritório
+$('.btn-delete-office').on('click', function() {
+    const id = $(this).data('id');
+    const name = $(this).data('name');
+    
+    if (!confirm(`Confirma a exclusão do escritório "${name}"?\n\nATENÇÃO: Só é possível excluir se não houver clientes.`)) {
+        return;
+    }
+    
+    $.post('{{ url_for("offices.delete_office", office_id=0) }}'.replace('0', id))
+    .done(function(data) {
+        alert(data.message);
+        location.reload();
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+</script>
+{% endblock %}
