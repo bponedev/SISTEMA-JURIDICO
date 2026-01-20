@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Cliente - Sistema Jurídico{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-pencil"></i> EDITAR CLIENTE #{{ client.id }}</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">ESCRITÓRIO</label>
+                    <input type="text" class="form-control text-uppercase" 
+                           value="{{ office.upper() }}" disabled>
+                    <small class="text-muted">Use "Migrar" para mudar de escritório</small>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">NOME *</label>
+                    <input type="text" name="nome" class="form-control text-uppercase" 
+                           value="{{ client.nome }}" required>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">CPF *</label>
+                    <input type="text" name="cpf" class="form-control" 
+                           value="{{ client.cpf }}" required>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">TIPO DE AÇÃO</label>
+                    <input type="text" name="tipo_acao" class="form-control text-uppercase" 
+                           value="{{ client.tipo_acao or '' }}">
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">DATA FECHAMENTO</label>
+                    <input type="date" name="data_fechamento" class="form-control" 
+                           value="{{ client.data_fechamento or '' }}">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">PENDÊNCIAS</label>
+                    <textarea name="pendencias" class="form-control text-uppercase" 
+                              rows="2">{{ client.pendencias or '' }}</textarea>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">OBSERVAÇÕES</label>
+                    <textarea name="observacoes" class="form-control text-uppercase" 
+                              rows="2">{{ client.observacoes or '' }}</textarea>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">NÚMERO DO PROCESSO</label>
+                    <input type="text" name="numero_processo" class="form-control" 
+                           value="{{ client.numero_processo or '' }}">
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">DATA PROTOCOLO</label>
+                    <input type="date" name="data_protocolo" class="form-control" 
+                           value="{{ client.data_protocolo or '' }}">
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">CAPTADOR - PAGO/NÃO PAGO</label>
+                    <select name="captador_pago" class="form-select">
+                        <option value="">Selecione...</option>
+                        <option value="PAGO" {% if client.captador_pago == 'PAGO' %}selected{% endif %}>PAGO</option>
+                        <option value="NÃO PAGO" {% if client.captador_pago == 'NÃO PAGO' %}selected{% endif %}>NÃO PAGO</option>
+                        <option value="PENDENTE" {% if client.captador_pago == 'PENDENTE' %}selected{% endif %}>PENDENTE</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">NOME DO CAPTADOR</label>
+                    <input type="text" name="nome_captador" class="form-control text-uppercase" 
+                           value="{{ client.nome_captador or '' }}">
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle"></i> SALVAR ALTERAÇÕES
+                </button>
+                <a href="{{ url_for('clients.list_clients', office=office) }}" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> CANCELAR
+                </a>
+                <button type="button" class="btn btn-warning btn-lg" id="btnMigrate">
+                    <i class="bi bi-arrow-right-circle"></i> MIGRAR
+                </button>
+                <button type="button" class="btn btn-danger btn-lg" id="btnDelete">
+                    <i class="bi bi-trash"></i> EXCLUIR
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Converter inputs para maiúsculas
+$('input.text-uppercase, textarea.text-uppercase').on('input', function() {
+    this.value = this.value.toUpperCase();
+});
+
+// Migrar cliente
+$('#btnMigrate').on('click', function() {
+    const target = prompt('Digite o código do escritório de destino:');
+    if (!target) return;
+    
+    if (!confirm('Confirma a migração deste cliente?')) return;
+    
+    $.post('{{ url_for("clients.migrate_client") }}', {
+        id: {{ client.id }},
+        office_current: '{{ office }}',
+        office_target: target
+    })
+    .done(function(data) {
+        alert(data.message);
+        window.location.href = '{{ url_for("clients.list_clients") }}?office=' + target;
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+
+// Excluir cliente
+$('#btnDelete').on('click', function() {
+    if (!confirm('Confirma a exclusão deste cliente?')) return;
+    
+    $.post('{{ url_for("clients.delete_clients") }}', {
+        office: '{{ office }}',
+        'client_ids[]': [{{ client.id }}]
+    })
+    .done(function(data) {
+        alert(data.message);
+        window.location.href = '{{ url_for("clients.list_clients", office=office) }}';
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+</script>
+{% endblock %}
