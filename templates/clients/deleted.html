@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes Excluídos - Sistema Jurídico{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-trash3"></i> CLIENTES EXCLUÍDOS - {{ office.upper() }}</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="mb-3">
+            <button type="button" class="btn btn-success" id="btnRestoreSelected">
+                <i class="bi bi-arrow-counterclockwise"></i> RESTAURAR SELECIONADOS
+            </button>
+            <a href="{{ url_for('clients.list_clients', office=office) }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> VOLTAR
+            </a>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>ID ORIGINAL</th>
+                        <th>NOME</th>
+                        <th>CPF</th>
+                        <th>TIPO AÇÃO</th>
+                        <th>EXCLUÍDO EM</th>
+                        <th>AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td><input type="checkbox" class="record-check" data-id="{{ record.id }}"></td>
+                        <td>{{ record.original_id }}</td>
+                        <td>{{ record.nome }}</td>
+                        <td>{{ record.cpf }}</td>
+                        <td>{{ record.tipo_acao or '-' }}</td>
+                        <td>{{ record.deleted_at }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success btn-restore" 
+                                    data-id="{{ record.id }}" title="Restaurar">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Nenhum registro excluído</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Selecionar todos
+$('#selectAll').on('change', function() {
+    $('.record-check').prop('checked', $(this).prop('checked'));
+});
+
+// Restaurar único
+$('.btn-restore').on('click', function() {
+    if (!confirm('Confirma a restauração deste cliente?')) return;
+    
+    const id = $(this).data('id');
+    
+    $.post('{{ url_for("clients.restore_clients") }}', {
+        office: '{{ office }}',
+        'deleted_ids[]': [id]
+    })
+    .done(function(data) {
+        alert(data.message);
+        location.reload();
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+
+// Restaurar selecionados
+$('#btnRestoreSelected').on('click', function() {
+    const checked = $('.record-check:checked');
+    
+    if (checked.length === 0) {
+        alert('Selecione pelo menos um registro.');
+        return;
+    }
+    
+    if (!confirm(`Confirma a restauração de ${checked.length} registro(s)?`)) {
+        return;
+    }
+    
+    const ids = [];
+    checked.each(function() {
+        ids.push($(this).data('id'));
+    });
+    
+    $.post('{{ url_for("clients.restore_clients") }}', {
+        office: '{{ office }}',
+        'deleted_ids[]': ids
+    })
+    .done(function(data) {
+        alert(data.message);
+        location.reload();
+    })
+    .fail(function(xhr) {
+        alert('Erro: ' + (xhr.responseJSON?.message || 'Erro desconhecido'));
+    });
+});
+</script>
+{% endblock %}
