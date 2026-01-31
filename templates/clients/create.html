@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Cliente - Sistema Jurídico{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-plus-circle"></i> NOVO CLIENTE</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">ESCRITÓRIO *</label>
+                    <input type="text" name="office" class="form-control text-uppercase" 
+                           placeholder="Digite o nome do escritório" required>
+                    <small class="text-muted">Pode criar um novo ou usar existente</small>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">NOME *</label>
+                    <input type="text" name="nome" class="form-control text-uppercase" 
+                           placeholder="Nome completo" required>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">CPF *</label>
+                    <input type="text" name="cpf" class="form-control" 
+                           placeholder="000.000.000-00" required>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">TIPO DE AÇÃO</label>
+                    <input type="text" name="tipo_acao" class="form-control text-uppercase" 
+                           placeholder="Ex: Trabalhista">
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">DATA FECHAMENTO</label>
+                    <input type="date" name="data_fechamento" class="form-control">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">PENDÊNCIAS</label>
+                    <textarea name="pendencias" class="form-control text-uppercase" 
+                              rows="2" placeholder="Descreva as pendências..."></textarea>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">OBSERVAÇÕES</label>
+                    <textarea name="observacoes" class="form-control text-uppercase" 
+                              rows="2" placeholder="Observações gerais..."></textarea>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">NÚMERO DO PROCESSO</label>
+                    <input type="text" name="numero_processo" class="form-control" 
+                           placeholder="0000000-00.0000.0.00.0000">
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">DATA PROTOCOLO</label>
+                    <input type="date" name="data_protocolo" class="form-control">
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">CAPTADOR - PAGO/NÃO PAGO</label>
+                    <select name="captador_pago" class="form-select">
+                        <option value="">Selecione...</option>
+                        <option value="PAGO">PAGO</option>
+                        <option value="NÃO PAGO">NÃO PAGO</option>
+                        <option value="PENDENTE">PENDENTE</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">NOME DO CAPTADOR</label>
+                    <input type="text" name="nome_captador" class="form-control text-uppercase" 
+                           placeholder="Nome do captador">
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-save"></i> CADASTRAR CLIENTE
+                </button>
+                <a href="{{ url_for('clients.list_clients') }}" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> CANCELAR
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Converter inputs para maiúsculas
+$('input.text-uppercase, textarea.text-uppercase').on('input', function() {
+    this.value = this.value.toUpperCase();
+});
+
+// Máscara para CPF
+$('input[name="cpf"]').on('input', function() {
+    let value = this.value.replace(/\D/g, '');
+    if (value.length > 11) value = value.slice(0, 11);
+    
+    if (value.length > 9) {
+        this.value = value.slice(0,3) + '.' + value.slice(3,6) + '.' + value.slice(6,9) + '-' + value.slice(9);
+    } else if (value.length > 6) {
+        this.value = value.slice(0,3) + '.' + value.slice(3,6) + '.' + value.slice(6);
+    } else if (value.length > 3) {
+        this.value = value.slice(0,3) + '.' + value.slice(3);
+    } else {
+        this.value = value;
+    }
+});
+</script>
+{% endblock %}

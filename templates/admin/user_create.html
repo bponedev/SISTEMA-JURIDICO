@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Usuário - Sistema Jurídico{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-person-plus"></i> CRIAR NOVO USUÁRIO</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">USERNAME *</label>
+                    <input type="text" name="username" class="form-control" required>
+                    <small class="text-muted">Login do usuário</small>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">NOME COMPLETO *</label>
+                    <input type="text" name="nome" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">SENHA *</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">PAPEL *</label>
+                    <select name="role" class="form-select" required>
+                        <option value="VISUALIZADOR">VISUALIZADOR (Apenas visualizar)</option>
+                        <option value="OPERADOR">OPERADOR (Editar escritórios atribuídos)</option>
+                        <option value="SUPERVISOR">SUPERVISOR (Editar todos)</option>
+                        <option value="ADMIN">ADMIN (Acesso total)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">ESCRITÓRIOS ATRIBUÍDOS</label>
+                <small class="text-muted d-block mb-2">
+                    Apenas para OPERADOR (pode editar somente estes)
+                </small>
+                <div class="row">
+                    {% for office in offices %}
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="offices" 
+                                   value="{{ office }}" id="office_{{ office }}">
+                            <label class="form-check-label" for="office_{{ office }}">
+                                {{ office.upper() }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="ativo" id="ativo" checked>
+                    <label class="form-check-label" for="ativo">
+                        USUÁRIO ATIVO
+                    </label>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-save"></i> CRIAR USUÁRIO
+                </button>
+                <a href="{{ url_for('admin.list_users') }}" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-x-circle"></i> CANCELAR
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,1 +1,86 @@
-<!-- audit -->
+{% extends "base.html" %}
+
+{% block title %}Auditoria - Sistema Jurídico{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-clock-history"></i> LOG DE AUDITORIA</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>DATA/HORA</th>
+                        <th>USUÁRIO</th>
+                        <th>AÇÃO</th>
+                        <th>TABELA</th>
+                        <th>REGISTRO</th>
+                        <th>DETALHES</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs.items %}
+                    <tr>
+                        <td>{{ log.id }}</td>
+                        <td>{{ log.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                        <td>
+                            {% if log.user %}
+                                {{ log.user.username }}
+                            {% else %}
+                                <span class="text-muted">Sistema</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if log.action == 'CREATE' %}success{% elif log.action == 'UPDATE' %}warning{% elif log.action == 'DELETE' %}danger{% elif log.action == 'RESTORE' %}info{% else %}secondary{% endif %}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td><code>{{ log.table_name }}</code></td>
+                        <td>{{ log.record_id or '-' }}</td>
+                        <td>
+                            <small>{{ log.details or '-' }}</small>
+                        </td>
+                        <td><small>{{ log.ip_address or '-' }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">Nenhum registro de auditoria</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if logs.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not logs.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ logs.prev_num }}">Anterior</a>
+                </li>
+                
+                {% for p in logs.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+                    {% if p %}
+                        <li class="page-item {% if p == logs.page %}active{% endif %}">
+                            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {% if not logs.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ logs.next_num }}">Próxima</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
